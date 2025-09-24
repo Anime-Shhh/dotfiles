@@ -33,3 +33,11 @@ yabai -m rule --add app="^Karabiner-Elements$" manage=off
 yabai -m config focus_follows_mouse autofocus
 
 borders active_color=0xffe1e3e4 inactive_color=0xff494d64 width=2.0 &
+
+#enable focus follows mouse
+yabai -m config focus_follows_mouse autoraise
+
+yabai -m config window_opacity on
+yabai -m config window_opacity_duration 0.2
+yabai -m config active_window_opacity 1.0
+yabai -m config normal_window_opacity 0.85
