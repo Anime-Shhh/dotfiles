@@ -28,6 +28,8 @@ yabai -m mouse_drop_action swap
 yabai -m rule --add app="^System Settings$" manage=off
 yabai -m rule --add app="^Calculator$" manage=off
 yabai -m rule --add app="^Karabiner-Elements$" manage=off
+yabai -m rule --add app="^FaceTime$" manage=off
+yabai -m rule --add app="^Finder$" manage=off
 
 # focus follows mouse
 yabai -m config focus_follows_mouse autofocus
@@ -41,3 +43,7 @@ yabai -m config window_opacity on
 yabai -m config window_opacity_duration 0.2
 yabai -m config active_window_opacity 1.0
 yabai -m config normal_window_opacity 0.85
+
+
+
+yabai -m rule --add state=floating manage=on above=1
