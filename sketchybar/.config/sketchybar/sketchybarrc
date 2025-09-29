@@ -48,11 +48,12 @@ sketchybar --default icon.font="SF Pro:Semibold:15.0" \
 source $ITEM_DIR/front_app.sh
 source $ITEM_DIR/spaces.sh
 #
+## -- Right Side Of Notch Items --
+
 # --- Right Side Items ---
 source $ITEM_DIR/calendar.sh
 source $ITEM_DIR/volume.sh
 source $ITEM_DIR/battery.sh
-source $ITEM_DIR/cpu.sh
 ##### Finalizing Setup #####
 # The below command is only needed at the end of the initial configuration to
 # force all scripts to run the first time, it should never be run in an item script.
