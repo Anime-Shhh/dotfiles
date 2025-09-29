@@ -47,3 +47,7 @@ yabai -m config normal_window_opacity 0.85
 
 
 yabai -m rule --add state=floating manage=on above=1
+
+yabai -m config external_bar all:32:0
+
+
