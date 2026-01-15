@@ -5,4 +5,5 @@
 # @raycast.packageName Custom
 
 # Trigger the built-in macOS screenshot tool for a selection
-screencapture -i -c ~/Downloads/Screenshots/snippet-$(date +%Y-%m-%d_%H-%M-%S).png
+screencapture -i ~/Downloads/Screenshots/snippet-$(date +%Y-%m-%d_%H-%M-%S).png
+screencapture -i -c
