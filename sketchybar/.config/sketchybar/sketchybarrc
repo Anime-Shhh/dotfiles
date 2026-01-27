@@ -54,6 +54,14 @@ source $ITEM_DIR/spaces.sh
 source $ITEM_DIR/calendar.sh
 source $ITEM_DIR/volume.sh
 source $ITEM_DIR/battery.sh
+
+# spotify colors
+#
+sketchybar \
+  --add item spotify_color right \
+  --set spotify_color \
+  update_freq=2 \
+  script="$HOME/.config/sketchybar/plugins/spotify_color.sh"
 ##### Finalizing Setup #####
 # The below command is only needed at the end of the initial configuration to
 # force all scripts to run the first time, it should never be run in an item script.
