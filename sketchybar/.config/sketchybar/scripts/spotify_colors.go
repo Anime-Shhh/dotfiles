@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"image"
+	"image/color"
 	_ "image/jpeg"
 	_ "image/png"
 	"net/http"
@@ -27,48 +28,98 @@ func getArtworkURL() (string, error) {
 	end tell`)
 }
 
+/* ---------- HAZY-STYLE COLOR LOGIC ---------- */
+
+func brightness(c color.RGBA) float64 {
+	return 0.299*float64(c.R) + 0.587*float64(c.G) + 0.114*float64(c.B)
+}
+
+func isTooDark(c color.RGBA) bool {
+	return brightness(c) < 100
+}
+
+func isTooCloseToWhite(c color.RGBA) bool {
+	return c.R > 200 && c.G > 200 && c.B > 200
+}
+
+func isUsable(c color.RGBA) bool {
+	return !isTooDark(c) && !isTooCloseToWhite(c)
+}
+
+func darken(c color.RGBA, factor float64) color.RGBA {
+	return color.RGBA{
+		R: uint8(float64(c.R) * factor),
+		G: uint8(float64(c.G) * factor),
+		B: uint8(float64(c.B) * factor),
+		A: 255,
+	}
+}
+
+func readableTextColor(bg color.RGBA) color.RGBA {
+	if brightness(bg) > 140 {
+		return color.RGBA{R: 20, G: 20, B: 20, A: 255}
+	}
+	return color.RGBA{R: 240, G: 240, B: 240, A: 255}
+}
+
 /*
 DOMINANT COLOR
-Histogram-based, skips black/white noise
+Histogram-based, Hazy-style filtering + fallback
 */
-func dominantColor(img image.Image) (uint8, uint8, uint8) {
+func dominantColor(img image.Image) color.RGBA {
 	bounds := img.Bounds()
-	hist := make(map[[3]uint8]int)
+	hist := make(map[color.RGBA]int)
 
+	// Pass 1: filtered
 	for y := bounds.Min.Y; y < bounds.Max.Y; y += 5 {
 		for x := bounds.Min.X; x < bounds.Max.X; x += 5 {
 			r16, g16, b16, _ := img.At(x, y).RGBA()
-			r := uint8(r16 >> 8)
-			g := uint8(g16 >> 8)
-			b := uint8(b16 >> 8)
-
-			// Ignore near-black & near-white
-			if (r < 15 && g < 15 && b < 15) ||
-				(r > 240 && g > 240 && b > 240) {
+			c := color.RGBA{
+				R: uint8(r16 >> 8),
+				G: uint8(g16 >> 8),
+				B: uint8(b16 >> 8),
+				A: 255,
+			}
+			if !isUsable(c) {
 				continue
 			}
+			hist[c]++
+		}
+	}
 
-			hist[[3]uint8{r, g, b}]++
+	// Fallback: no filtering (Hazy retry logic)
+	if len(hist) == 0 {
+		for y := bounds.Min.Y; y < bounds.Max.Y; y += 5 {
+			for x := bounds.Min.X; x < bounds.Max.X; x += 5 {
+				r16, g16, b16, _ := img.At(x, y).RGBA()
+				c := color.RGBA{
+					R: uint8(r16 >> 8),
+					G: uint8(g16 >> 8),
+					B: uint8(b16 >> 8),
+					A: 255,
+				}
+				hist[c]++
+			}
 		}
 	}
 
 	var max int
-	var color [3]uint8
+	var dominant color.RGBA
 	for c, count := range hist {
 		if count > max {
 			max = count
-			color = c
+			dominant = c
 		}
 	}
 
-	return color[0], color[1], color[2]
+	return dominant
 }
 
 /*
 BACKGROUND COLOR
-Simple average = good neutral UI base
+Average + darkened for UI stability
 */
-func averageColor(img image.Image) (uint8, uint8, uint8) {
+func averageColor(img image.Image) color.RGBA {
 	bounds := img.Bounds()
 	var rSum, gSum, bSum, count uint64
 
@@ -82,13 +133,17 @@ func averageColor(img image.Image) (uint8, uint8, uint8) {
 		}
 	}
 
-	return uint8(rSum / count), uint8(gSum / count), uint8(bSum / count)
+	return color.RGBA{
+		R: uint8(rSum / count),
+		G: uint8(gSum / count),
+		B: uint8(bSum / count),
+		A: 255,
+	}
 }
 
 func main() {
 	url, err := getArtworkURL()
 	if err != nil || url == "" {
-		fmt.Println("Spotify not playing")
 		return
 	}
 
@@ -103,9 +158,16 @@ func main() {
 		return
 	}
 
-	dr, dg, db := dominantColor(img)
-	br, bg, bb := averageColor(img)
+	dominant := dominantColor(img)
+	bg := averageColor(img)
 
-	fmt.Printf("DOMINANT=0xFF%02X%02X%02X\n", dr, dg, db)
-	fmt.Printf("BACKGROUND=0xFF%02X%02X%02X\n", br, bg, bb)
+	// Tone down background (VERY important for SketchyBar)
+	bg = darken(bg, 0.75)
+
+	text := readableTextColor(bg)
+
+	fmt.Printf("BACKGROUND=0xFF%02X%02X%02X\n", bg.R, bg.G, bg.B)
+	fmt.Printf("LABEL=0xFF%02X%02X%02X\n", text.R, text.G, text.B)
+	fmt.Printf("ICON=0xFF%02X%02X%02X\n", text.R, text.G, text.B)
+	fmt.Printf("DOMINANT=0xFF%02X%02X%02X\n", dominant.R, dominant.G, dominant.B)
 }
