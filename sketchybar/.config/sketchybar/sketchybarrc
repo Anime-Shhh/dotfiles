@@ -55,13 +55,13 @@ source $ITEM_DIR/calendar.sh
 source $ITEM_DIR/volume.sh
 source $ITEM_DIR/battery.sh
 
-# spotify colors
-#
-sketchybar \
-  --add item spotify_color right \
+# Spotify color sync (event-driven — only runs on song/state change, not polling)
+sketchybar --add event spotify_change "com.spotify.client.PlaybackStateChanged"
+sketchybar --add item spotify_color right \
   --set spotify_color \
-  update_freq=2 \
-  script="$HOME/.config/sketchybar/plugins/spotify_color.sh"
+    drawing=off \
+    script="$PLUGIN_DIR/spotify_color.sh" \
+  --subscribe spotify_color spotify_change system_woke
 ##### Finalizing Setup #####
 # The below command is only needed at the end of the initial configuration to
 # force all scripts to run the first time, it should never be run in an item script.
